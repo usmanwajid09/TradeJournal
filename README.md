@@ -1,16 +1,54 @@
-# React + Vite
+# TradeJournal — Professional Trading Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TradeJournal is a sophisticated, full-stack trading log and analytics platform designed to help traders track their performance, identify psychological patterns, and refine their strategies. Built for Deliverable 2 of the Web Development course.
 
-Currently, two official plugins are available:
+## Overview
+Success in trading depends on consistency and self-awareness. TradeJournal provides a centralized dashboard for logging trades, analyzing P&L stats, and maintaining a disciplined journal of every execution.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features (Deliverable 2)
+- **Interactive Dashboard**: Overview of key performance metrics and trading stats.
+- **Log Trades**: Custom form to record entry, exit, position sizing, and psychological notes.
+- **Live Trades Tracker**: Real-time view of active positions (simulated for Frontend deliverable).
+- **Trade Journaling**: Detailed historical log of all trades with filtering options.
+- **GSAP-powered Onboarding**: Professional login experience with an interactive carousel.
+- **Responsive Design**: Optimized for Desktop and Mobile using React-Bootstrap.
 
-## React Compiler
+## Tech Stack
+- **Frontend**: React.js (v19)
+- **State Management**: React Hooks (useState/useEffect)
+- **Routing**: React Router DOM (v7)
+- **Styling**: Bootstrap 5 + React-Bootstrap + Vanilla CSS
+- **Animations**: GSAP (GreenSock Animation Platform)
+- **Icons**: Lucide React
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Setup & Run
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd tradejournal
+   ```
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+3. **Run development server**:
+   ```bash
+   npm run dev
+   ```
 
-## Expanding the ESLint configuration
+## Project Deliverables Status
+- [x] Deliverable 1: UI/UX Design (Figma)
+- [x] Deliverable 2: Frontend Development
+- [ ] Deliverable 3: Backend Development (Hexagonal Architecture)
+- [ ] Deliverable 4: Integration & Deployment
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Team Members
+- Usman Wajid (usmanwajid09)
+- Ahmad Masood (AhmadMsood13)
+
+## Instructor & TA
+- **Instructor**: Sir Kamran Arshad (M-K-Arshad)
+- **TA**: Simal Butt (simalbutt)
+
+---
+*Developed as part of the Web Engineering project requirement (Spring 2026).*

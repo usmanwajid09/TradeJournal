@@ -8,13 +8,14 @@ import LiveTrades from './pages/LiveTrades';
 import TradesList from './pages/TradesList';
 import Profile from './pages/Profile';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+// Main App component handling global routing for TradeJournal
+// Using react-router-dom v7 for modern routing patterns
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+        {/* Protected routes wrapped in MainLayout for sidebar/navbar access */}
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/add-trade" element={<AddTrade />} />

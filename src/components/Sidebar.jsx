@@ -13,6 +13,7 @@ import logo from '../assets/logo.png';
 const Sidebar = () => {
     const location = useLocation();
 
+    // Menu logic - each item correlates to a route in App.jsx
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
         { name: 'Live Trades', icon: TrendingUp, path: '/trades' },
@@ -44,10 +45,11 @@ const Sidebar = () => {
                 </Nav>
             </div>
 
+            {/* Pro Upgrade Section - Placeholder for persistent upsell */}
             <div className="sb-upsell mt-auto mx-3 mb-4 p-3 rounded-4" style={{ background: 'rgba(63, 108, 251, 0.1)', border: '1px solid rgba(63, 108, 251, 0.2)' }}>
                 <div className="upsell-crown mb-2" style={{ fontSize: '20px' }}>👑</div>
                 <div className="upsell-title fw-bold text-white mb-1" style={{ fontSize: '13px' }}>Go Pro Trader</div>
-                <div className="upsell-sub text-secondary mb-3" style={{ fontSize: '11px', lineHeight: '1.4' }}>Unlock advanced analytics and AI insights.</div>
+                <div className="upsell-sub text-secondary mb-3" style={{ fontSize: '11px', lineHeight: '1.4' }}>Unlock advanced analytics and smart insights.</div>
                 <button className="btn btn-primary w-100 py-1 fw-bold" style={{ fontSize: '11px' }}>Upgrade</button>
             </div>
 
