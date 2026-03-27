@@ -24,7 +24,7 @@ Success in trading depends on consistency and self-awareness. TradeJournal provi
 ## Setup & Run
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/usmanwajid09/TradeJournal>
    cd tradejournal
    ```
 2. **Install dependencies**:
