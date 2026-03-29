@@ -2,26 +2,25 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import AddTrade from './pages/AddTrade';
-import LiveTrades from './pages/LiveTrades';
-import TradesList from './pages/TradesList';
-import Profile from './pages/Profile';
-import 'bootstrap/dist/css/bootstrap.min.css';
-// Main App component handling global routing for TradeJournal
-// Using react-router-dom v7 for modern routing patterns
+import TradeLogger from './pages/TradeLogger';
+import ChartGallery from './pages/ChartGallery';
+import Analytics from './pages/Analytics';
+import Login from './pages/Login'; // Assume we'll update or keep it
+// import 'bootstrap/dist/css/bootstrap.min.css'; // REMOVED Bootstrap
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        {/* Protected routes wrapped in MainLayout for sidebar/navbar access */}
+        
+        {/* Protected routes wrapped in MainLayout */}
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/add-trade" element={<AddTrade />} />
-          <Route path="/trades" element={<LiveTrades />} />
-          <Route path="/journal" element={<TradesList />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/journal" element={<TradeLogger />} />
+          <Route path="/gallery" element={<ChartGallery />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/profile" element={<div>Profile Placeholder</div>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
