@@ -1,16 +1,17 @@
 import React from 'react';
 import { Row, Col, Table, Badge } from 'react-bootstrap';
-import { Search, ChevronDown, Monitor, Clock, Calendar } from 'lucide-react';
+import { Search, Monitor, Calendar, Plus, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-    // Current Date string
+    const navigate = useNavigate();
     const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     const recentTrades = [
-        { id: 1, symbol: 'EURUSD', side: 'Long', entry: '1.08520', exit: '1.09240', rr: '1:2.4', profit: '+$720', mood: '😊', status: 'Win' },
-        { id: 2, symbol: 'BTCUSDT', side: 'Short', entry: '64,280', exit: '63,120', rr: '1:3.1', profit: '+$1,160', mood: '😎', status: 'Win' },
-        { id: 3, symbol: 'GBPUSD', side: 'Long', entry: '1.26400', exit: '1.26120', rr: '1:1.0', profit: '-$280', mood: '😐', status: 'Loss' },
-        { id: 4, symbol: 'GOLD', side: 'Long', entry: '2,145.5', exit: '2,178.2', rr: '1:4.2', profit: '+$3,270', mood: '🔥', status: 'Win' },
+        { id: 1, symbol: 'EURUSD',  side: 'Long',  entry: '1.08520', exit: '1.09240', rr: '1:2.4', profit: '+$720',   mood: '😊', status: 'Win' },
+        { id: 2, symbol: 'BTCUSDT', side: 'Short', entry: '64,280',  exit: '63,120',  rr: '1:3.1', profit: '+$1,160', mood: '😎', status: 'Win' },
+        { id: 3, symbol: 'GBPUSD',  side: 'Long',  entry: '1.26400', exit: '1.26120', rr: '1:1.0', profit: '-$280',   mood: '😐', status: 'Loss' },
+        { id: 4, symbol: 'GOLD',    side: 'Long',  entry: '2,145.5', exit: '2,178.2', rr: '1:4.2', profit: '+$3,270', mood: '🔥', status: 'Win' },
     ];
 
     return (
@@ -27,10 +28,20 @@ const Dashboard = () => {
                 <div className="d-flex align-items-center gap-3">
                     <div className="search-box position-relative d-flex align-items-center">
                         <Search size={14} className="position-absolute ms-3 text-secondary" />
-                        <input type="text" className="form-input ps-5 py-2 small" placeholder="Search trades..." style={{ width: '220px', borderRadius: '8px' }} />
+                        <input
+                            type="text"
+                            className="form-input ps-5 py-2 small"
+                            placeholder="Search trades..."
+                            style={{ width: '220px', borderRadius: '8px' }}
+                        />
                     </div>
-                    <button className="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-bold" style={{ borderRadius: '8px', fontSize: '13px' }}>
-                        Add New Trade
+                    <button
+                        id="dashboard-add-trade-btn"
+                        className="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-bold"
+                        style={{ borderRadius: '8px', fontSize: '13px' }}
+                        onClick={() => navigate('/add-trade')}
+                    >
+                        <Plus size={15}/> Add New Trade
                     </button>
                 </div>
             </div>
@@ -76,7 +87,7 @@ const Dashboard = () => {
                             <div className="h3 fw-bold text-white mb-0">1:2.4</div>
                             <span className="text-secondary small">Expected Value</span>
                         </div>
-                        <div className="w-100 bg-secondary-subtle mt-2" style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.05)' }}>
+                        <div className="w-100 mt-2" style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.05)' }}>
                             <div className="bg-primary h-100" style={{ width: '75%', borderRadius: '2px' }}></div>
                         </div>
                     </div>
@@ -125,21 +136,16 @@ const Dashboard = () => {
                         <h5 className="text-white fw-bold mb-4">Daily P&L</h5>
                         <div className="bar-chart">
                             <div className="bar bg-success" style={{ height: '40%' }}></div>
-                            <div className="bar bg-danger" style={{ height: '20%' }}></div>
+                            <div className="bar bg-danger"  style={{ height: '20%' }}></div>
                             <div className="bar bg-success" style={{ height: '70%' }}></div>
                             <div className="bar bg-success" style={{ height: '55%' }}></div>
-                            <div className="bar bg-danger" style={{ height: '35%' }}></div>
+                            <div className="bar bg-danger"  style={{ height: '35%' }}></div>
                             <div className="bar bg-success" style={{ height: '85%' }}></div>
                             <div className="bar bg-success" style={{ height: '60%' }}></div>
                         </div>
                         <div className="mt-4 pt-2 border-top border-subtle d-flex justify-content-between text-secondary small">
-                            <span>MON</span>
-                            <span>TUE</span>
-                            <span>WED</span>
-                            <span>THU</span>
-                            <span>FRI</span>
-                            <span>SAT</span>
-                            <span>SUN</span>
+                            <span>MON</span><span>TUE</span><span>WED</span>
+                            <span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
                         </div>
                     </div>
                 </Col>
@@ -149,7 +155,13 @@ const Dashboard = () => {
             <div className="section-card bg-card p-4" style={{ borderRadius: '16px' }}>
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h5 className="text-white fw-bold mb-0">Recent Trade Closures</h5>
-                    <div className="text-accent small cursor-pointer fw-bold">View Portfolio</div>
+                    <button
+                        id="dashboard-view-portfolio-btn"
+                        className="btn btn-sm text-accent d-flex align-items-center gap-1 border-0 bg-transparent p-0 fw-bold small"
+                        onClick={() => navigate('/journal')}
+                    >
+                        View Portfolio <ArrowUpRight size={14}/>
+                    </button>
                 </div>
                 <Table responsive hover className="custom-table mb-0">
                     <thead>
@@ -164,7 +176,7 @@ const Dashboard = () => {
                     </thead>
                     <tbody>
                         {recentTrades.map((trade) => (
-                            <tr key={trade.id} className="align-middle">
+                            <tr key={trade.id} className="align-middle" style={{ cursor: 'pointer' }} onClick={() => navigate('/journal')}>
                                 <td>
                                     <div className="d-flex align-items-center gap-2">
                                         <div className="symbol-icon" style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>
@@ -198,4 +210,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
