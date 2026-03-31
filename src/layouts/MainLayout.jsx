@@ -1,21 +1,20 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
-import './MainLayout.css';
+import { Outlet } from 'react-router-dom';
 
 const MainLayout = () => {
-  return (
-    <div className="layout-shell">
-      <Sidebar />
-      <div className="layout-content">
-        <Topbar />
-        <main className="main-viewport">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  );
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: 'var(--bg-deep)' }}>
+            <Navbar />
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                <Sidebar />
+                <main style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+                    <Outlet />
+                </main>
+            </div>
+        </div>
+    );
 };
 
 export default MainLayout;
