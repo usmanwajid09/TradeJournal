@@ -3,6 +3,7 @@ import { Form, Row, Col, Table } from 'react-bootstrap';
 import { ArrowLeft, Plus, Trash2, Star, CheckCircle2, AlertCircle, ChevronRight, ChevronLeft, TrendingUp, FileText, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { addTrade } from '../services/api';
+import { applyTrade } from '../services/virtualBalance';
 
 const MOODS = ['😊', '😐', '😤', '😨', '😎'];
 const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', 'D'];
@@ -86,14 +87,24 @@ const AddTrade = () => {
         const e_  = parseFloat(formData.entry)     || 0;
         const sl_ = parseFloat(formData.stopLoss)   || 0;
         const tp_ = parseFloat(formData.takeProfit) || 0;
-        const rawPnl = formData.side === 'Long' ? (tp_ - e_) * (parseFloat(formData.size) || 1) : (e_ - tp_) * (parseFloat(formData.size) || 1);
+        const rawPnl = formData.side === 'Long'
+            ? (tp_ - e_) * (parseFloat(formData.size) || 1)
+            : (e_ - tp_) * (parseFloat(formData.size) || 1);
         const pnl = parseFloat(rawPnl.toFixed(2));
+
         await addTrade({
             ...formData,
             rr:     rr ? `1:${rr}` : '—',
             profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
             pnl,
         });
+
+        // Update virtual balance with trade result
+        if (tp_) {
+            const reason = `${formData.symbol} ${formData.side} (${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)})`;
+            applyTrade(pnl, reason);
+        }
+
         setSaving(false); setSuccess(true);
         setTimeout(() => navigate('/journal'), 1600);
     };
