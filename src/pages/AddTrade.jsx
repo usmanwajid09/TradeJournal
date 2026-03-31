@@ -1,58 +1,140 @@
 import React, { useState } from 'react';
-import { Form, Button, Row, Col, Alert, Table } from 'react-bootstrap';
-import { ArrowLeft, Plus, Trash2, Star, CheckCircle2 } from 'lucide-react';
+import { Form, Button, Row, Col, Table } from 'react-bootstrap';
+import { ArrowLeft, Plus, Trash2, Star, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { addTrade } from '../services/api';
+
+const MOODS = ['😊', '😐', '😤', '😨', '😎'];
+const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', 'D'];
 
 const AddTrade = () => {
     const [activeTab, setActiveTab] = useState('General');
     const [formData, setFormData] = useState({
-        symbol: '',
-        side: 'Long',
-        timeframe: '1H',
-        strategy: 'Trend Following',
-        entry: '',
-        stopLoss: '',
+        symbol:     '',
+        side:       'Long',
+        timeframe:  '1H',
+        strategy:   '',
+        entry:      '',
+        stopLoss:   '',
         takeProfit: '',
-        notes: '',
-        mood: 'Neutral',
-        rating: 3
+        size:       '',
+        notes:      '',
+        mood:       '😊',   // ← fixed: emoji not string
+        rating:     3,
     });
+    const [extraTargets, setExtraTargets] = useState([]);
+    const [errors, setErrors]   = useState({});
+    const [saving, setSaving]   = useState(false);
     const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
 
-    // Calculate R:R
+    // ── R:R calc ─────────────────────────────────────────────────────────────
     const calculateRR = () => {
-        if (!formData.entry || !formData.stopLoss || !formData.takeProfit) return '0.0';
-        const risk = Math.abs(formData.entry - formData.stopLoss);
-        const reward = Math.abs(formData.takeProfit - formData.entry);
-        if (risk === 0) return '0.0';
-        return (reward / risk).toFixed(2);
+        const e = parseFloat(formData.entry);
+        const sl = parseFloat(formData.stopLoss);
+        const tp = parseFloat(formData.takeProfit);
+        if (!e || !sl || !tp) return '—';
+        const risk   = Math.abs(e - sl);
+        const reward = Math.abs(tp - e);
+        if (risk === 0) return '—';
+        return `1:${(reward / risk).toFixed(2)}`;
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setSuccess(true);
-        setTimeout(() => navigate('/journal'), 1500);
+    // ── Validation ────────────────────────────────────────────────────────────
+    const validateGeneral = () => {
+        const errs = {};
+        if (!formData.symbol.trim())   errs.symbol   = 'Symbol is required';
+        if (!formData.strategy.trim()) errs.strategy = 'Strategy is required';
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
     };
+
+    const validateOrders = () => {
+        const errs = {};
+        if (!formData.entry)    errs.entry    = 'Entry price required';
+        if (!formData.stopLoss) errs.stopLoss = 'Stop loss required';
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
+    // ── Tab navigation ────────────────────────────────────────────────────────
+    const handleNextTab = () => {
+        if (activeTab === 'General' && !validateGeneral()) return;
+        if (activeTab === 'Orders'  && !validateOrders())  return;
+        setErrors({});
+        setActiveTab(activeTab === 'General' ? 'Orders' : 'Journal');
+    };
+
+    const handleBackTab = () => {
+        setErrors({});
+        setActiveTab(activeTab === 'Journal' ? 'Orders' : 'General');
+    };
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+
+        const e_  = parseFloat(formData.entry)    || 0;
+        const sl_ = parseFloat(formData.stopLoss)  || 0;
+        const tp_ = parseFloat(formData.takeProfit)|| 0;
+        const rawPnl = formData.side === 'Long'
+            ? (tp_ - e_) * (parseFloat(formData.size) || 1)
+            : (e_  - tp_) * (parseFloat(formData.size) || 1);
+        const pnl = parseFloat(rawPnl.toFixed(2));
+
+        await addTrade({
+            ...formData,
+            rr:     calculateRR(),
+            profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
+            pnl,
+        });
+
+        setSaving(false);
+        setSuccess(true);
+        setTimeout(() => navigate('/journal'), 1400);
+    };
+
+    // ── Extra TP targets ──────────────────────────────────────────────────────
+    const addTPTarget = () => {
+        setExtraTargets(prev => [...prev, { id: Date.now(), price: '' }]);
+    };
+
+    const removeTPTarget = (id) => {
+        setExtraTargets(prev => prev.filter(t => t.id !== id));
+    };
+
+    const updateTPTarget = (id, value) => {
+        setExtraTargets(prev => prev.map(t => t.id === id ? { ...t, price: value } : t));
+    };
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    const field = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
 
     return (
-        <div className="form-page mx-auto" style={{ maxWidth: '800px' }}>
+        <div className="form-page mx-auto" style={{ maxWidth: '820px' }}>
+            {/* PAGE HEADER */}
             <div className="mb-4 d-flex align-items-center justify-content-between">
                 <div className="d-flex align-items-center gap-3">
-                    <Button variant="transparent" className="p-0 text-secondary" onClick={() => navigate(-1)}>
+                    <button className="btn btn-sm text-secondary border-0 bg-transparent p-0" onClick={() => navigate(-1)}>
                         <ArrowLeft size={20} />
-                    </Button>
+                    </button>
                     <h2 className="page-title h4 mb-0 text-white">Log New Trade</h2>
                 </div>
-                {success && <div className="text-success small fw-bold d-flex align-items-center gap-2"><CheckCircle2 size={16}/> Saved to Journal</div>}
+                {success && (
+                    <div className="text-success small fw-bold d-flex align-items-center gap-2">
+                        <CheckCircle2 size={16}/> Saved to Journal
+                    </div>
+                )}
             </div>
 
             <div className="bg-card border border-subtle overflow-hidden" style={{ borderRadius: '16px' }}>
-                {/* TABS HEADER */}
+                {/* TABS */}
                 <div className="modal-tabs pt-3">
                     {['General', 'Orders', 'Journal'].map(tab => (
-                        <div 
-                            key={tab} 
+                        <div
+                            key={tab}
+                            id={`tab-${tab.toLowerCase()}`}
                             className={`modal-tab ${activeTab === tab ? 'active' : ''}`}
                             onClick={() => setActiveTab(tab)}
                         >
@@ -63,26 +145,29 @@ const AddTrade = () => {
 
                 <div className="p-4">
                     <Form onSubmit={handleSubmit}>
-                        {/* GENERAL TAB */}
+
+                        {/* ── GENERAL TAB ─────────────────────────────────── */}
                         {activeTab === 'General' && (
-                            <div className="tab-pane fade show active">
+                            <div>
                                 <Row className="g-3 mb-4">
                                     <Col md={6}>
-                                        <label className="form-label text-secondary small fw-bold mb-2">SYMBOL / PAIR</label>
-                                        <input 
-                                            className="form-input" 
+                                        <label className="form-label text-secondary small fw-bold mb-2">SYMBOL / PAIR *</label>
+                                        <input
+                                            id="field-symbol"
+                                            className={`form-input ${errors.symbol ? 'border-danger' : ''}`}
                                             placeholder="e.g. BTCUSDT"
                                             value={formData.symbol}
-                                            onChange={(e) => setFormData({...formData, symbol: e.target.value})}
-                                            required
+                                            onChange={e => field('symbol', e.target.value)}
                                         />
+                                        {errors.symbol && <div className="text-danger small mt-1 d-flex align-items-center gap-1"><AlertCircle size={12}/>{errors.symbol}</div>}
                                     </Col>
                                     <Col md={6}>
                                         <label className="form-label text-secondary small fw-bold mb-2">SIDE</label>
-                                        <select 
+                                        <select
+                                            id="field-side"
                                             className="form-input"
                                             value={formData.side}
-                                            onChange={(e) => setFormData({...formData, side: e.target.value})}
+                                            onChange={e => field('side', e.target.value)}
                                         >
                                             <option value="Long">Long (Buy)</option>
                                             <option value="Short">Short (Sell)</option>
@@ -90,116 +175,174 @@ const AddTrade = () => {
                                     </Col>
                                     <Col md={6}>
                                         <label className="form-label text-secondary small fw-bold mb-2">TIMEFRAME</label>
-                                        <select 
+                                        <select
+                                            id="field-timeframe"
                                             className="form-input"
                                             value={formData.timeframe}
-                                            onChange={(e) => setFormData({...formData, timeframe: e.target.value})}
+                                            onChange={e => field('timeframe', e.target.value)}
                                         >
-                                            <option>1m</option><option>5m</option><option>15m</option><option>1h</option><option>4h</option><option>D</option>
+                                            {TIMEFRAMES.map(tf => <option key={tf}>{tf}</option>)}
                                         </select>
                                     </Col>
                                     <Col md={6}>
-                                        <label className="form-label text-secondary small fw-bold mb-2">STRATEGY</label>
-                                        <input 
-                                            className="form-input" 
-                                            placeholder="Strategy name"
+                                        <label className="form-label text-secondary small fw-bold mb-2">STRATEGY *</label>
+                                        <input
+                                            id="field-strategy"
+                                            className={`form-input ${errors.strategy ? 'border-danger' : ''}`}
+                                            placeholder="e.g. Supply & Demand"
                                             value={formData.strategy}
-                                            onChange={(e) => setFormData({...formData, strategy: e.target.value})}
+                                            onChange={e => field('strategy', e.target.value)}
+                                        />
+                                        {errors.strategy && <div className="text-danger small mt-1 d-flex align-items-center gap-1"><AlertCircle size={12}/>{errors.strategy}</div>}
+                                    </Col>
+                                    <Col md={6}>
+                                        <label className="form-label text-secondary small fw-bold mb-2">POSITION SIZE</label>
+                                        <input
+                                            id="field-size"
+                                            type="number"
+                                            className="form-input"
+                                            placeholder="e.g. 1.0 lot"
+                                            value={formData.size}
+                                            onChange={e => field('size', e.target.value)}
                                         />
                                     </Col>
                                 </Row>
                             </div>
                         )}
 
-                        {/* ORDERS TAB */}
+                        {/* ── ORDERS TAB ──────────────────────────────────── */}
                         {activeTab === 'Orders' && (
-                            <div className="tab-pane">
+                            <div>
                                 <Table responsive borderless className="custom-table mb-4">
                                     <thead>
                                         <tr className="border-bottom border-subtle">
                                             <th className="text-secondary small py-3">ORDER TYPE</th>
                                             <th className="text-secondary small py-3">PRICE</th>
-                                            <th className="text-secondary small py-3">RISK/REWARD</th>
+                                            <th className="text-secondary small py-3">NOTE</th>
                                             <th className="text-end py-3"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        {/* Entry */}
                                         <tr>
-                                            <td className="py-3 text-white"><Badge bg="primary" style={{ fontSize: '10px' }}>ENTRY</Badge></td>
+                                            <td className="py-3"><span className="badge bg-primary" style={{ fontSize: '10px' }}>ENTRY</span></td>
                                             <td className="py-2">
-                                                <input 
-                                                    type="number" 
-                                                    className="form-input py-1 text-white border-0 bg-transparent" 
-                                                    placeholder="0.00" 
+                                                <input
+                                                    id="field-entry"
+                                                    type="number"
+                                                    className={`form-input py-1 ${errors.entry ? 'border-danger' : ''}`}
+                                                    placeholder="0.00"
                                                     value={formData.entry}
-                                                    onChange={(e) => setFormData({...formData, entry: e.target.value})}
+                                                    onChange={e => field('entry', e.target.value)}
                                                 />
+                                                {errors.entry && <div className="text-danger" style={{fontSize:'11px'}}>{errors.entry}</div>}
                                             </td>
-                                            <td className="py-3 text-secondary italic">Main entry point</td>
-                                            <td className="text-end"><Trash2 size={16} className="text-secondary cursor-pointer opacity-50"/></td>
+                                            <td className="py-3 text-secondary small">Main entry point</td>
+                                            <td></td>
                                         </tr>
+                                        {/* Stop Loss */}
                                         <tr>
-                                            <td className="py-3 text-white"><Badge bg="danger" style={{ fontSize: '10px' }}>STOP LOSS</Badge></td>
+                                            <td className="py-3"><span className="badge bg-danger" style={{ fontSize: '10px' }}>STOP LOSS</span></td>
                                             <td className="py-2">
-                                                <input 
-                                                    type="number" 
-                                                    className="form-input py-1 text-white border-0 bg-transparent" 
-                                                    placeholder="0.00" 
+                                                <input
+                                                    id="field-stoploss"
+                                                    type="number"
+                                                    className={`form-input py-1 ${errors.stopLoss ? 'border-danger' : ''}`}
+                                                    placeholder="0.00"
                                                     value={formData.stopLoss}
-                                                    onChange={(e) => setFormData({...formData, stopLoss: e.target.value})}
+                                                    onChange={e => field('stopLoss', e.target.value)}
                                                 />
+                                                {errors.stopLoss && <div className="text-danger" style={{fontSize:'11px'}}>{errors.stopLoss}</div>}
                                             </td>
-                                            <td className="py-3 text-danger fw-bold">R:R 1:{calculateRR()}</td>
-                                            <td className="text-end"><Trash2 size={16} className="text-secondary cursor-pointer opacity-50"/></td>
+                                            <td className="py-3 text-danger fw-bold">R:R {calculateRR()}</td>
+                                            <td></td>
                                         </tr>
+                                        {/* Take Profit 1 */}
                                         <tr>
-                                            <td className="py-3 text-white"><Badge bg="success" style={{ fontSize: '10px' }}>TARGET 1</Badge></td>
+                                            <td className="py-3"><span className="badge bg-success" style={{ fontSize: '10px' }}>TARGET 1</span></td>
                                             <td className="py-2">
-                                                <input 
-                                                    type="number" 
-                                                    className="form-input py-1 text-white border-0 bg-transparent" 
-                                                    placeholder="0.00" 
+                                                <input
+                                                    id="field-takeprofit"
+                                                    type="number"
+                                                    className="form-input py-1"
+                                                    placeholder="0.00"
                                                     value={formData.takeProfit}
-                                                    onChange={(e) => setFormData({...formData, takeProfit: e.target.value})}
+                                                    onChange={e => field('takeProfit', e.target.value)}
                                                 />
                                             </td>
-                                            <td className="py-3 text-success">Profit taking</td>
-                                            <td className="text-end"><Trash2 size={16} className="text-secondary cursor-pointer opacity-50"/></td>
+                                            <td className="py-3 text-success small">Primary target</td>
+                                            <td></td>
                                         </tr>
+                                        {/* Dynamic extra TP targets */}
+                                        {extraTargets.map((target, idx) => (
+                                            <tr key={target.id}>
+                                                <td className="py-3"><span className="badge bg-success" style={{ fontSize: '10px', opacity: 0.7 }}>TARGET {idx + 2}</span></td>
+                                                <td className="py-2">
+                                                    <input
+                                                        type="number"
+                                                        className="form-input py-1"
+                                                        placeholder="0.00"
+                                                        value={target.price}
+                                                        onChange={e => updateTPTarget(target.id, e.target.value)}
+                                                    />
+                                                </td>
+                                                <td className="py-3 text-secondary small">Extra target</td>
+                                                <td className="text-end">
+                                                    <button type="button" className="btn btn-sm text-danger border-0 bg-transparent p-1" onClick={() => removeTPTarget(target.id)}>
+                                                        <Trash2 size={15}/>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </Table>
-                                <Button variant="outline-primary" className="btn-secondary w-100 d-flex align-items-center justify-content-center gap-2 py-2 border-dashed" style={{ borderStyle: 'dashed' }}>
-                                    <Plus size={16}/> Add TP Target
-                                </Button>
+                                <button
+                                    type="button"
+                                    id="add-tp-target-btn"
+                                    className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2 text-secondary"
+                                    style={{ border: '1px dashed var(--border-input)', borderRadius: '8px', background: 'transparent' }}
+                                    onClick={addTPTarget}
+                                >
+                                    <Plus size={15}/> Add TP Target
+                                </button>
                             </div>
                         )}
 
-                        {/* JOURNAL TAB */}
+                        {/* ── JOURNAL TAB ─────────────────────────────────── */}
                         {activeTab === 'Journal' && (
-                            <div className="tab-pane">
+                            <div>
                                 <div className="mb-4">
                                     <label className="form-label text-secondary small fw-bold mb-2">TRADE NARRATIVE</label>
-                                    <textarea 
-                                        className="form-input" 
-                                        rows={4} 
+                                    <textarea
+                                        id="field-notes"
+                                        className="form-input"
+                                        rows={4}
                                         placeholder="What's the mindset? Why this trade?..."
                                         value={formData.notes}
-                                        onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                                    ></textarea>
+                                        onChange={e => field('notes', e.target.value)}
+                                    />
                                 </div>
                                 <div className="row g-4 mb-4">
                                     <div className="col-md-6">
                                         <label className="form-label text-secondary small fw-bold mb-2">TRADING MOOD</label>
                                         <div className="d-flex gap-2">
-                                            {['😊', '😐', '😤', '😨', '😎'].map(m => (
-                                                <div 
-                                                    key={m} 
-                                                    className={`mood-pill cursor-pointer p-2 rounded-circle d-flex align-items-center justify-content-center ${formData.mood === m ? 'bg-primary' : 'bg-secondary'}`}
-                                                    style={{ width: '40px', height: '40px', opacity: formData.mood === m ? 1 : 0.4 }}
-                                                    onClick={() => setFormData({...formData, mood: m})}
+                                            {MOODS.map(m => (
+                                                <button
+                                                    key={m}
+                                                    type="button"
+                                                    id={`mood-${m}`}
+                                                    className="border-0 p-0 d-flex align-items-center justify-content-center rounded-circle"
+                                                    style={{
+                                                        width: '40px', height: '40px', fontSize: '20px',
+                                                        background: formData.mood === m ? 'var(--accent-blue)' : 'rgba(255,255,255,0.06)',
+                                                        opacity: formData.mood === m ? 1 : 0.45,
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.15s ease',
+                                                    }}
+                                                    onClick={() => field('mood', m)}
                                                 >
                                                     {m}
-                                                </div>
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
@@ -207,11 +350,12 @@ const AddTrade = () => {
                                         <label className="form-label text-secondary small fw-bold mb-2 d-block">EXECUTION QUALITY</label>
                                         <div className="d-flex gap-1 justify-content-md-end">
                                             {[1, 2, 3, 4, 5].map(s => (
-                                                <Star 
-                                                    key={s} 
-                                                    size={20} 
-                                                    className={`cursor-pointer ${formData.rating >= s ? 'text-warning fill-warning' : 'text-secondary opacity-25'}`}
-                                                    onClick={() => setFormData({...formData, rating: s})}
+                                                <Star
+                                                    key={s}
+                                                    size={22}
+                                                    id={`star-${s}`}
+                                                    style={{ cursor: 'pointer', color: formData.rating >= s ? '#F59E0B' : 'rgba(255,255,255,0.15)', fill: formData.rating >= s ? '#F59E0B' : 'none', transition: 'all 0.15s' }}
+                                                    onClick={() => field('rating', s)}
                                                 />
                                             ))}
                                         </div>
@@ -220,16 +364,26 @@ const AddTrade = () => {
                             </div>
                         )}
 
+                        {/* ── FOOTER ACTIONS ───────────────────────────────── */}
                         <div className="d-flex justify-content-between align-items-center mt-5 pt-4 border-top border-subtle">
-                            <div className="text-secondary small">Auto-calculated R:R 1:{calculateRR()}</div>
+                            <div className="text-secondary small">
+                                {formData.entry && formData.stopLoss && formData.takeProfit
+                                    ? <>Auto-calculated R:R <strong className="text-white">{calculateRR()}</strong></>
+                                    : <span>Fill orders tab to calculate R:R</span>
+                                }
+                            </div>
                             <div className="d-flex gap-3">
                                 {activeTab !== 'General' && (
-                                    <Button variant="outline-secondary" className="px-4 py-2" onClick={() => setActiveTab(activeTab === 'Journal' ? 'Orders' : 'General')}>Back</Button>
+                                    <button type="button" id="btn-back" className="btn btn-secondary px-4 py-2" onClick={handleBackTab}>Back</button>
                                 )}
                                 {activeTab !== 'Journal' ? (
-                                    <Button variant="primary" className="px-5 py-2 fw-bold" onClick={() => setActiveTab(activeTab === 'General' ? 'Orders' : 'Journal')}>Next Step</Button>
+                                    <button type="button" id="btn-next" className="btn btn-primary px-5 py-2 fw-bold" onClick={handleNextTab}>
+                                        Next Step
+                                    </button>
                                 ) : (
-                                    <Button variant="primary" type="submit" className="px-5 py-2 fw-bold shadow-lg">Complete Log</Button>
+                                    <button type="submit" id="btn-submit" className="btn btn-primary px-5 py-2 fw-bold shadow-lg" disabled={saving}>
+                                        {saving ? 'Saving…' : 'Complete Log'}
+                                    </button>
                                 )}
                             </div>
                         </div>
@@ -241,4 +395,3 @@ const AddTrade = () => {
 };
 
 export default AddTrade;
-
