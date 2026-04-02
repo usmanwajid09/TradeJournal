@@ -1,0 +1,133 @@
+.trade-logger-container {
+  display: flex;
+  gap: var(--space-6);
+  min-height: calc(100vh - 48px - var(--space-6) * 2);
+}
+
+.logger-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.logger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-4);
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.table-container {
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trade-table th {
+  background: var(--bg-elevated);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.trade-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: middle;
+}
+
+.trade-table .table-row:hover {
+  background: var(--bg-elevated);
+}
+
+.placeholder-img {
+  width: 24px;
+  height: 24px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.logger-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.filter-panel {
+  position: sticky;
+  top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkbox-group, .radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.checkbox-row, .radio-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+
+.checkbox-row:hover, .radio-row:hover {
+  color: var(--text-primary);
+}
+
+.checkbox-row input, .radio-row input {
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+}
+
+.empty-state {
+  padding: var(--space-12);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.w-10 { width: 40px; }
+.mt-6 { margin-top: var(--space-6); }
+.mt-8 { margin-top: var(--space-8); }
+.pb-2 { padding-bottom: var(--space-2); }
+.border-b { border-bottom: 1px solid; }
+.border-default { border-color: var(--border-default); }

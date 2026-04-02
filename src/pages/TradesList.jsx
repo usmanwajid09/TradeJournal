@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Badge } from 'react-bootstrap';
-import { Search, Download, Calendar, Trash2, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, Download, Calendar, Trash2, RefreshCw, TrendingUp, TrendingDown, BarChart2 } from 'lucide-react';
 import { getTrades, deleteTrade } from '../services/api';
+import { gsap } from 'gsap';
 
 const TradesList = () => {
-    const [trades, setTrades]           = useState([]);
-    const [searchTerm, setSearchTerm]   = useState('');
+    const [trades, setTrades]             = useState([]);
+    const [searchTerm, setSearchTerm]     = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-    const [loading, setLoading]         = useState(true);
-    const [deleting, setDeleting]       = useState(null);
+    const [loading, setLoading]           = useState(true);
+    const [deleting, setDeleting]         = useState(null);
+    const rowsRef = useRef([]);
 
     const loadTrades = useCallback(async () => {
         setLoading(true);
@@ -19,36 +20,46 @@ const TradesList = () => {
 
     useEffect(() => { loadTrades(); }, [loadTrades]);
 
-    // ── Filtering ─────────────────────────────────────────────────────────────
+    // Animate rows in after load
+    useEffect(() => {
+        if (!loading && rowsRef.current.length) {
+            gsap.fromTo(
+                rowsRef.current.filter(Boolean),
+                { opacity: 0, x: -12 },
+                { opacity: 1, x: 0, stagger: 0.05, duration: 0.35, ease: 'power2.out' }
+            );
+        }
+    }, [loading, statusFilter, searchTerm]);
+
+    // ── Filter ────────────────────────────────────────────────────────────────
     const filtered = trades.filter(t => {
-        const matchSearch = t.symbol.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchStatus = statusFilter === 'All' || t.status === statusFilter;
-        return matchSearch && matchStatus;
+        const matchS = t.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchF = statusFilter === 'All' || t.status === statusFilter;
+        return matchS && matchF;
     });
 
-    // ── Summary stats for filtered set ────────────────────────────────────────
-    const totalPnl = filtered.reduce((s, t) => s + (t.pnl || 0), 0);
-    const wins     = filtered.filter(t => t.status === 'Profit').length;
+    const totalPnl   = filtered.reduce((s, t) => s + (t.pnl || 0), 0);
+    const wins       = filtered.filter(t => t.status === 'Profit').length;
+    const losses     = filtered.length - wins;
+    const winRate    = filtered.length ? ((wins / filtered.length) * 100).toFixed(0) : 0;
 
-    // ── CSV Export ────────────────────────────────────────────────────────────
+    // ── CSV Export ─────────────────────────────────────────────────────────────
     const exportCSV = () => {
-        const cols = ['Date', 'Symbol', 'Side', 'Timeframe', 'Strategy', 'Entry', 'Exit', 'Size', 'R:R', 'P&L', 'Status', 'Mood', 'Rating', 'Notes'];
+        const cols = ['Date','Symbol','Side','Timeframe','Strategy','Entry','Exit','Size','R:R','P&L','Status','Mood','Rating','Notes'];
         const rows = filtered.map(t => [
-            t.date, t.symbol, t.side, t.timeframe || '', t.strategy || '',
-            t.entry, t.exit || '', t.size || '',
-            t.rr, t.profit, t.status, t.mood || '', t.rating || '', `"${(t.notes || '').replace(/"/g, '""')}"`
+            t.date, t.symbol, t.side, t.timeframe||'', t.strategy||'',
+            t.entry, t.exit||'', t.size||'', t.rr, t.profit, t.status, t.mood||'', t.rating||'',
+            `"${(t.notes||'').replace(/"/g,'""')}"`
         ]);
-        const csv = [cols.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const csv  = [cols.join(','), ...rows.map(r => r.join(','))].join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url  = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href     = url;
-        link.download = `trade-journal-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
+        const a    = document.createElement('a');
+        a.href = url; a.download = `trade-journal-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click(); URL.revokeObjectURL(url);
     };
 
-    // ── Delete ─────────────────────────────────────────────────────────────────
+    // ── Delete ────────────────────────────────────────────────────────────────
     const handleDelete = async (id) => {
         if (!window.confirm('Remove this trade from your journal?')) return;
         setDeleting(id);
@@ -57,153 +68,146 @@ const TradesList = () => {
         setDeleting(null);
     };
 
+    const FILTERS = [
+        { key: 'All',    label: 'All Trades' },
+        { key: 'Profit', label: '✅ Winners' },
+        { key: 'Loss',   label: '❌ Losers'  },
+    ];
+
     return (
-        <div className="trades-list-content">
-            {/* PAGE HEADER */}
+        <div className="trades-list-content animate-fade-up">
+            {/* HEADER */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 className="page-title h4 fw-bold text-white mb-1">Trading Journal</h2>
-                    <p className="text-secondary small mb-0">Maintain a record of your past executions and strategies.</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+                        Record, review and learn from every execution.
+                    </p>
                 </div>
                 <div className="d-flex gap-2">
-                    <button
-                        id="refresh-trades-btn"
-                        className="btn btn-sm text-secondary d-flex align-items-center gap-2 border-subtle px-3 py-2 fw-bold"
-                        style={{ border: '1px solid var(--border-subtle)', borderRadius: '8px', background: 'transparent' }}
+                    <button id="refresh-trades-btn"
                         onClick={loadTrades}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(79,124,255,0.4)'; e.currentTarget.style.color = 'var(--accent-blue)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                     >
-                        <RefreshCw size={14} /> Refresh
+                        <RefreshCw size={13} /> Refresh
                     </button>
-                    <button
-                        id="export-csv-btn"
-                        className="btn btn-sm text-secondary d-flex align-items-center gap-2 border-subtle px-3 py-2 fw-bold"
-                        style={{ border: '1px solid var(--border-subtle)', borderRadius: '8px', background: 'transparent' }}
+                    <button id="export-csv-btn"
                         onClick={exportCSV}
-                        disabled={filtered.length === 0}
+                        disabled={!filtered.length}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600, cursor: filtered.length ? 'pointer' : 'default', opacity: filtered.length ? 1 : 0.4, transition: 'all 0.15s' }}
+                        onMouseEnter={e => filtered.length && (e.currentTarget.style.borderColor = 'rgba(0,230,118,0.3)', e.currentTarget.style.color = 'var(--color-positive)')}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-subtle)', e.currentTarget.style.color = 'var(--text-secondary)')}
                     >
-                        <Download size={14} /> Export CSV
+                        <Download size={13} /> Export CSV
                     </button>
                 </div>
             </div>
 
-            {/* SUMMARY BAR */}
-            <div className="d-flex gap-4 mb-3 px-1">
-                <div className="small">
-                    <span className="text-secondary">Showing </span>
-                    <strong className="text-white">{filtered.length}</strong>
-                    <span className="text-secondary"> of {trades.length} trades</span>
-                </div>
-                <div className="small">
-                    <span className="text-secondary">Wins: </span>
-                    <strong className="text-success">{wins}</strong>
-                </div>
-                <div className="small">
-                    <span className="text-secondary">Total P&L: </span>
-                    <strong className={totalPnl >= 0 ? 'text-success' : 'text-danger'}>
-                        {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
-                    </strong>
-                </div>
+            {/* STATS STRIP */}
+            <div className="d-flex gap-3 mb-4 flex-wrap">
+                {[
+                    { Icon: BarChart2, label: 'Trades', value: `${filtered.length} / ${trades.length}`, color: 'var(--text-primary)' },
+                    { Icon: TrendingUp, label: 'Wins', value: wins, color: 'var(--color-positive)' },
+                    { Icon: TrendingDown, label: 'Losses', value: losses, color: 'var(--color-negative)' },
+                    { Icon: null, label: 'Win Rate', value: `${winRate}%`, color: parseInt(winRate) >= 50 ? 'var(--color-positive)' : 'var(--color-negative)' },
+                    { Icon: null, label: 'Total P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, color: totalPnl >= 0 ? 'var(--color-positive)' : 'var(--color-negative)' },
+                ].map(({ Icon, label, value, color }, i) => (
+                    <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {Icon && <Icon size={14} style={{ color: 'var(--text-secondary)' }}/>}
+                        <div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+                            <div style={{ fontSize: '15px', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            <div className="section-card bg-card border border-subtle overflow-hidden" style={{ borderRadius: '16px' }}>
-                {/* FILTERS TOOLBAR */}
-                <div className="p-3 border-bottom border-subtle bg-deep">
-                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                        <div className="d-flex gap-2">
-                            {['All', 'Profit', 'Loss'].map(f => (
-                                <Badge
-                                    key={f}
-                                    bg={statusFilter === f ? 'primary' : 'secondary'}
-                                    className={`px-3 py-2 cursor-pointer ${statusFilter !== f ? 'opacity-50' : ''}`}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => setStatusFilter(f)}
-                                >
-                                    {f === 'All' ? 'All Trades' : f === 'Profit' ? 'Winners' : 'Losers'}
-                                </Badge>
-                            ))}
-                        </div>
-                        <div className="search-box position-relative d-flex align-items-center">
-                            <Search size={14} className="position-absolute ms-3 text-secondary" />
-                            <input
-                                id="search-trades-input"
-                                type="text"
-                                className="form-input ps-5 py-2 small"
-                                placeholder="Search by symbol..."
-                                style={{ width: '240px' }}
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+            {/* MAIN TABLE CARD */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '16px', overflow: 'hidden' }}>
+                {/* TOOLBAR */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-deep)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <div className="d-flex gap-2">
+                        {FILTERS.map(f => (
+                            <button key={f.key} onClick={() => setStatusFilter(f.key)}
+                                style={{
+                                    padding: '6px 14px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                                    background: statusFilter === f.key ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.04)',
+                                    color: statusFilter === f.key ? '#fff' : 'var(--text-secondary)',
+                                    boxShadow: statusFilter === f.key ? '0 2px 12px rgba(79,124,255,0.25)' : 'none',
+                                }}
+                            >{f.label}</button>
+                        ))}
+                    </div>
+                    <div className="position-relative d-flex align-items-center">
+                        <Search size={13} className="position-absolute ms-3" style={{ color: 'var(--text-muted)' }} />
+                        <input id="search-trades-input" type="text" className="form-input ps-5 py-2 small"
+                            placeholder="Search symbol…" style={{ width: '220px' }}
+                            value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
 
-                {/* TRADES TABLE */}
+                {/* TABLE */}
                 {loading ? (
-                    <div className="text-center py-5 text-secondary">Loading trades…</div>
+                    <div className="text-center py-5" style={{ color: 'var(--text-secondary)' }}>
+                        <div style={{ fontSize: '24px', marginBottom: '12px', animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</div>
+                        <div>Loading trades…</div>
+                    </div>
                 ) : (
-                    <Table responsive hover className="custom-table mb-0">
+                    <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr>
-                                <th className="text-secondary small fw-bold ps-4">DATE</th>
-                                <th className="text-secondary small fw-bold">SYMBOL</th>
-                                <th className="text-secondary small fw-bold">SIDE</th>
-                                <th className="text-secondary small fw-bold">ENTRY</th>
-                                <th className="text-secondary small fw-bold">EXIT</th>
-                                <th className="text-secondary small fw-bold">R:R</th>
-                                <th className="text-secondary small fw-bold">PROFIT/LOSS</th>
-                                <th className="text-secondary small fw-bold">MOOD</th>
-                                <th className="text-secondary small fw-bold text-end pe-4">ACTIONS</th>
+                                {['DATE', 'SYMBOL', 'SIDE', 'ENTRY', 'EXIT', 'R:R', 'P&L', 'MOOD', ''].map((col, i) => (
+                                    <th key={i} style={{ padding: '12px 16px', textAlign: i === 8 ? 'right' : 'left', paddingLeft: i === 0 ? '20px' : undefined, paddingRight: i === 8 ? '20px' : undefined }}>
+                                        {col}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map(trade => (
-                                <tr key={trade.id} className="align-middle" style={{ opacity: deleting === trade.id ? 0.4 : 1, transition: 'opacity 0.3s' }}>
-                                    <td className="ps-4">
+                            {filtered.map((trade, idx) => (
+                                <tr key={trade.id} ref={el => rowsRef.current[idx] = el}
+                                    style={{ opacity: deleting === trade.id ? 0.3 : 1, transition: 'opacity 0.3s' }}>
+                                    <td style={{ paddingLeft: '20px' }}>
                                         <div className="d-flex align-items-center gap-2">
-                                            <Calendar size={13} className="text-secondary" />
-                                            <span className="text-secondary small">{trade.date}</span>
+                                            <Calendar size={12} style={{ color: 'var(--text-muted)' }} />
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{trade.date}</span>
                                         </div>
                                     </td>
                                     <td>
                                         <div className="d-flex align-items-center gap-2">
-                                            <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700 }}>
+                                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--accent-blue-dim)', border: '1px solid rgba(79,124,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--accent-blue)' }}>
                                                 {trade.symbol[0]}
                                             </div>
-                                            <span className="fw-bold text-white">{trade.symbol}</span>
+                                            <span style={{ fontWeight: 700 }}>{trade.symbol}</span>
                                         </div>
                                     </td>
-                                    <td>
-                                        <span className={`trade-side ${trade.side === 'Long' ? 'long' : 'short'}`}>
-                                            {trade.side.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td className="text-white small">{trade.entry}</td>
-                                    <td className="text-white small">{trade.exit || '—'}</td>
-                                    <td className="text-secondary small">{trade.rr}</td>
-                                    <td className={`fw-bold small ${trade.status === 'Profit' ? 'text-success' : 'text-danger'}`}>
+                                    <td><span className={`trade-side ${trade.side === 'Long' ? 'long' : 'short'}`}>{trade.side.toUpperCase()}</span></td>
+                                    <td style={{ fontSize: '12px' }}>{trade.entry}</td>
+                                    <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{trade.exit || '—'}</td>
+                                    <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{trade.rr}</td>
+                                    <td style={{ fontWeight: 700, fontSize: '13px', color: trade.status === 'Profit' ? 'var(--color-positive)' : 'var(--color-negative)' }}>
                                         {trade.profit}
                                     </td>
-                                    <td style={{ fontSize: '16px' }}>{trade.mood || '—'}</td>
-                                    <td className="text-end pe-4">
-                                        <button
-                                            id={`delete-trade-${trade.id}`}
-                                            className="btn btn-sm text-danger border-0 bg-transparent p-1"
-                                            title="Delete trade"
-                                            onClick={() => handleDelete(trade.id)}
-                                            disabled={deleting === trade.id}
-                                        >
-                                            <Trash2 size={15}/>
-                                        </button>
+                                    <td style={{ fontSize: '18px' }}>{trade.mood || '—'}</td>
+                                    <td style={{ textAlign: 'right', paddingRight: '20px' }}>
+                                        <button id={`delete-trade-${trade.id}`} onClick={() => handleDelete(trade.id)} disabled={deleting === trade.id}
+                                            style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '6px', transition: 'all 0.15s' }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-negative-dim)'; e.currentTarget.style.color = 'var(--color-negative)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                                        ><Trash2 size={14}/></button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
-                    </Table>
+                    </table>
                 )}
 
-                {!loading && filtered.length === 0 && (
+                {!loading && !filtered.length && (
                     <div className="text-center py-5">
-                        <p className="text-secondary">No trades match your criteria.</p>
+                        <div style={{ fontSize: '32px', marginBottom: '12px' }}>📭</div>
+                        <div style={{ color: 'var(--text-secondary)' }}>No trades match your criteria.</div>
                     </div>
                 )}
             </div>

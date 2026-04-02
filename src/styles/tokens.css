@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Color Tokens - Dark Glass Utility */
+  --bg-app:         #0D0D0F;   /* near-black app shell */
+  --bg-surface:     #111114;   /* card/panel background */
+  --bg-elevated:    #18181C;   /* hover states, table rows */
+  --bg-input:       #1C1C21;   /* input fields */
+
+  --border-default: #242428;   /* subtle borders */
+  --border-strong:  #2E2E34;   /* emphasized borders, separators */
+
+  --text-primary:   #F0EFF2;   /* main content, headings */
+  --text-secondary: #8B8A96;   /* muted labels, metadata */
+  --text-tertiary:  #4B4A55;   /* placeholder, disabled */
+
+  --accent-green:   #22C55E;   /* profit, wins, positive PnL */
+  --accent-red:     #EF4444;   /* loss, negative PnL */
+  --accent-blue:    #3B82F6;   /* interactive, links, selected */
+  --accent-amber:   #F59E0B;   /* warning, caution, risk thresholds */
+  --accent-purple:  #A78BFA;   /* CHoCH / structural tags */
+  --accent-teal:    #2DD4BF;   /* BoS tags */
+  --accent-coral:   #FB923C;   /* FVG / liquidity tags */
+
+  --chart-grid:     #1E1E24;   /* chart gridlines */
+  --chart-line:     #22C55E;   /* equity curve line */
+  --chart-fill:     rgba(34, 197, 94, 0.08); /* area fill under equity curve */
+
+  /* Typography Scale */
+  --font-main:      'Inter', 'SF Pro Display', system-ui, sans-serif;
+  
+  --text-2xl:       32px;
+  --text-xl:        24px;
+  --text-lg:        18px;
+  --text-md:        14px;
+  --text-base:      13px;
+  --text-sm:        12px;
+  --text-xs:        11px;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease-out;
+}
