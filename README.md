@@ -166,7 +166,7 @@ Open [http://localhost:5173](http://localhost:5173)
 | Name | GitHub |
 |---|---|
 | Usman Wajid | [@usmanwajid09](https://github.com/usmanwajid09) |
-| Ahmad Masood | [@AhmadMsood13](https://github.com/AhmadMsood13) |
+| Ahmad Masood | [@AhmadMsood13](https://github.com/AhmadMasood13) |
 
 **Instructor**: Sir Kamran Arshad ([@M-K-Arshad](https://github.com/M-K-Arshad))  
 **TA**: Simal Butt ([@simalbutt](https://github.com/simalbutt))
