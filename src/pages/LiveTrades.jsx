@@ -74,7 +74,9 @@ const LiveTrades = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab]   = useState('All');
     const [selected, setSelected]     = useState('BTC');
-    const [quickTrade, setQuickTrade] = useState(null);
+    const [quickTrade, setQuickTrade]   = useState(null);
+    const [activeTool, setActiveTool]   = useState(0);           // toolbar tool index
+    const [activeTimeframe, setActiveTimeframe] = useState('1h'); // selected timeframe
     const [connected, setConnected]   = useState(false);
     const flashTimers = useRef({});
 
@@ -263,12 +265,13 @@ const LiveTrades = () => {
 
                         {/* Timeframe buttons */}
                         <div style={{ display: 'flex', gap: '4px' }}>
-                            {['1m', '5m', '15m', '1h', '4h', 'D'].map((t, i) => (
+                            {['1m', '5m', '15m', '1h', '4h', 'D'].map((t) => (
                                 <button key={t}
+                                    onClick={() => setActiveTimeframe(t)}
                                     style={{
                                         padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                                        background: i === 3 ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.04)',
-                                        color: i === 3 ? '#fff' : 'var(--text-secondary)',
+                                        background: activeTimeframe === t ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.04)',
+                                        color: activeTimeframe === t ? '#fff' : 'var(--text-secondary)',
                                         border: 'none',
                                     }}
                                 >{t}</button>
@@ -277,12 +280,35 @@ const LiveTrades = () => {
                     </div>
 
                     {/* Toolbar */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-sidebar)' }}>
-                        {[MousePointer2, TrendingUp, Crosshair, Type, Layout].map((Icon, i) => (
-                            <button key={i} style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '4px 8px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-sidebar)' }}>
+                        {[
+                            { Icon: MousePointer2, label: 'Cursor'      },
+                            { Icon: TrendingUp,    label: 'Trend Line'  },
+                            { Icon: Crosshair,     label: 'Crosshair'   },
+                            { Icon: Type,          label: 'Text Label'  },
+                            { Icon: Layout,        label: 'Layout'      },
+                        ].map(({ Icon, label }, i) => (
+                            <button key={i}
+                                title={label}
+                                onClick={() => setActiveTool(i)}
+                                style={{
+                                    width: '30px', height: '30px', borderRadius: '6px', border: 'none',
+                                    background: activeTool === i ? 'var(--accent-blue-dim)' : 'transparent',
+                                    color: activeTool === i ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    boxShadow: activeTool === i ? '0 0 0 1px rgba(79,124,255,0.3)' : 'none',
+                                    transition: 'all 0.15s',
+                                }}
+                                onMouseEnter={e => { if (activeTool !== i) { e.currentTarget.style.background='rgba(255,255,255,0.06)'; e.currentTarget.style.color='var(--text-primary)'; }}}
+                                onMouseLeave={e => { if (activeTool !== i) { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--text-secondary)'; }}}
+                            >
                                 <Icon size={14}/>
                             </button>
                         ))}
+                        <div style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }}/>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: '2px' }}>
+                            {['Cursor', 'Trend Line', 'Crosshair', 'Text Label', 'Layout'][activeTool]}
+                        </span>
                     </div>
 
                     {/* Chart canvas */}
