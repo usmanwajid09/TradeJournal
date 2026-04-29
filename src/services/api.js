@@ -6,8 +6,6 @@ import axiosInstance from './axiosInstance';
  * Communicates with the Node.js/Express backend following Hexagonal Architecture.
  */
 
-// ── READ ──────────────────────────────────────────────────────────────────────
-
 export const getTrades = async () => {
     try {
         const response = await axiosInstance.get('/trades');
@@ -43,8 +41,6 @@ export const getStats = async () => {
     }
 };
 
-// ── CREATE ────────────────────────────────────────────────────────────────────
-
 export const addTrade = async (tradeData) => {
     try {
         const response = await axiosInstance.post('/trades', tradeData);
@@ -54,8 +50,6 @@ export const addTrade = async (tradeData) => {
         throw error;
     }
 };
-
-// ── UPDATE ────────────────────────────────────────────────────────────────────
 
 export const updateTrade = async (id, updates) => {
     try {
@@ -67,8 +61,6 @@ export const updateTrade = async (id, updates) => {
     }
 };
 
-// ── DELETE ────────────────────────────────────────────────────────────────────
-
 export const deleteTrade = async (id) => {
     try {
         const response = await axiosInstance.delete(`/trades/${id}`);
@@ -78,8 +70,6 @@ export const deleteTrade = async (id) => {
         throw error;
     }
 };
-
-// ── PROFILE ───────────────────────────────────────────────────────────────────
 
 export const getUserProfile = async () => {
     const user = localStorage.getItem('user');

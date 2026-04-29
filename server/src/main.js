@@ -66,5 +66,4 @@ app.use(errorMiddleware);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`[Server] TradeJournal API running on port ${PORT}`);
-    console.log(`[Architecture] Hexagonal Architecture wired successfully`);
 });

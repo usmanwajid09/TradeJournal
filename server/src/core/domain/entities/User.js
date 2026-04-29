@@ -12,7 +12,6 @@ class User {
         this.createdAt = createdAt;
     }
 
-    // Domain logic could go here (e.g., validate email format, role permissions)
     static validate(userData) {
         if (!userData.email || !userData.password) {
             throw new Error('Email and password are required for a User entity');

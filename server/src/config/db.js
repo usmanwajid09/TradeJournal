@@ -16,7 +16,6 @@ const connectDB = async () => {
         console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error(`[Database] Error: ${error.message}`);
-        // If it still fails, it's a network restriction on the agent's side.
     }
 };
 
