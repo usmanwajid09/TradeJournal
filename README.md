@@ -10,7 +10,7 @@ Success in trading depends on consistency and self-awareness. TradeJournal provi
 
 ---
 
-## Screenshots
+## UI
 
 | Dashboard | Live Trades | Log Trade |
 |---|---|---|
@@ -18,7 +18,7 @@ Success in trading depends on consistency and self-awareness. TradeJournal provi
 
 ---
 
-## Features (Deliverable 2)
+## Features 
 
 ### Core Pages
 - **Dashboard** — Animated performance metrics (Total P&L, Win Rate, Avg R:R, Total Trades), equity growth SVG curve, daily P&L bar chart, scrolling live market ticker, recent trade table
