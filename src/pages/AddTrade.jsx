@@ -113,38 +113,49 @@ const AddTrade = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
-        const e_  = parseFloat(formData.entry)     || 0;
-        const sl_ = parseFloat(formData.stopLoss)   || 0;
-        const tp_ = parseFloat(formData.takeProfit) || 0;
-        const rawPnl = formData.side === 'Long'
-            ? (tp_ - e_) * (parseFloat(formData.size) || 1)
-            : (e_ - tp_) * (parseFloat(formData.size) || 1);
-        const pnl = parseFloat(rawPnl.toFixed(2));
+        setErrors({});
 
-        if (isEdit) {
-            await updateTrade(id, {
-                ...formData,
-                rr:     rr ? `1:${rr}` : '—',
-                profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
-                pnl,
-            });
-        } else {
-            await addTrade({
-                ...formData,
-                rr:     rr ? `1:${rr}` : '—',
-                profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
-                pnl,
-            });
+        try {
+            const e_  = parseFloat(formData.entry)     || 0;
+            const sl_ = parseFloat(formData.stopLoss)   || 0;
+            const tp_ = parseFloat(formData.takeProfit) || 0;
+            const rawPnl = formData.side === 'Long'
+                ? (tp_ - e_) * (parseFloat(formData.size) || 1)
+                : (e_ - tp_) * (parseFloat(formData.size) || 1);
+            const pnl = parseFloat(rawPnl.toFixed(2));
+
+            if (isEdit) {
+                await updateTrade(id, {
+                    ...formData,
+                    exit:   tp_, // Align with domain schema
+                    rr:     rr ? `1:${rr}` : '—',
+                    profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
+                    pnl,
+                });
+            } else {
+                await addTrade({
+                    ...formData,
+                    exit:   tp_, // Align with domain schema
+                    rr:     rr ? `1:${rr}` : '—',
+                    profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
+                    pnl,
+                });
+            }
+
+            // Update virtual balance with trade result
+            if (tp_) {
+                const reason = `${formData.symbol} ${formData.side} (${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)})`;
+                applyTrade(pnl, reason);
+            }
+
+            setSuccess(true);
+            setTimeout(() => navigate('/journal'), 1600);
+        } catch (err) {
+            console.error('Failed to save trade:', err);
+            setErrors({ server: err.response?.data?.message || err.message || 'Server connection failed' });
+        } finally {
+            setSaving(false);
         }
-
-        // Update virtual balance with trade result
-        if (tp_) {
-            const reason = `${formData.symbol} ${formData.side} (${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)})`;
-            applyTrade(pnl, reason);
-        }
-
-        setSaving(false); setSuccess(true);
-        setTimeout(() => navigate('/journal'), 1600);
     };
 
     const addTPTarget = () => setExtraTargets(p => [...p, { id: Date.now(), price: '' }]);
@@ -212,6 +223,14 @@ const AddTrade = () => {
 
                     <div className="p-4 p-lg-5">
                         <Form onSubmit={handleSubmit}>
+
+                            {/* Server Error Alert */}
+                            {errors.server && (
+                                <div className="alert alert-danger d-flex align-items-center gap-2 mb-4 animate-shake" style={{ background: 'var(--color-negative-dim)', border: '1px solid rgba(255,68,68,0.2)', color: 'var(--color-negative)', borderRadius: '12px', fontSize: '13px' }}>
+                                    <AlertCircle size={16} />
+                                    {errors.server}
+                                </div>
+                            )}
 
                             {/* ── GENERAL ── */}
                             {activeTab === 'General' && (

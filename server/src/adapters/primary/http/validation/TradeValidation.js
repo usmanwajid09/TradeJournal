@@ -17,7 +17,9 @@ const tradeSchema = Joi.object({
     strategy: Joi.string().allow(null, ''),
     timeframe: Joi.string().allow(null, ''),
     notes: Joi.string().allow(null, ''),
-    date: Joi.date().allow(null, '')
-});
+    date: Joi.date().allow(null, ''),
+    profit: Joi.string().allow(null, ''),
+    takeProfit: Joi.number().allow(null, '')
+}).unknown();
 
 export const validateTrade = (data) => tradeSchema.validate(data);

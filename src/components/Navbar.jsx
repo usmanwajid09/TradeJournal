@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar as BsNavbar, Container, Nav, Dropdown } from 'react-bootstrap';
 import { Bell, LogOut, Settings, ChevronDown, TrendingUp, CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getBalance, formatBalance } from '../services/virtualBalance';
 
 // ── Mock notifications (D3 will push these from the server) ──────────────────
@@ -22,7 +22,7 @@ const Navbar = () => {
     const navigate = useNavigate();
 
     const user = getCurrentUser() || { name: 'Guest', email: '' };
-    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const initials = (user.name || 'Guest').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 

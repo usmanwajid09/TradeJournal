@@ -8,8 +8,8 @@ const createAuthRoutes = (authController) => {
     const router = express.Router();
 
     // Bind methods to ensure 'this' context is preserved if needed
-    router.post('/register', (req, res) => authController.register(req, res));
-    router.post('/login', (req, res) => authController.login(req, res));
+    router.post('/register', (req, res, next) => authController.register(req, res, next));
+    router.post('/login', (req, res, next) => authController.login(req, res, next));
 
     return router;
 };
