@@ -135,6 +135,7 @@ const Sidebar = () => (
         {/* Profile */}
         <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.15s' }}
+                onClick={() => window.location.href='/profile'}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
@@ -145,9 +146,13 @@ const Sidebar = () => (
                     fontSize: '12px', fontWeight: 700, color: '#fff',
                     boxShadow: '0 0 12px rgba(79,124,255,0.3)',
                     flexShrink: 0,
-                }}>AM</div>
+                }}>
+                    {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).name.split(' ').map(n => n[0]).join('').toUpperCase() : 'GU'}
+                </div>
                 <div>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>Ahmad Masood</div>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).name : 'Guest User'}
+                    </div>
                     <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pro Trader</div>
                 </div>
             </div>

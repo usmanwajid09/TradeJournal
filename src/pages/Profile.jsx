@@ -3,22 +3,23 @@ import { Row, Col, Form, Button } from 'react-bootstrap';
 import { Shield, Bell, TrendingUp, TrendingDown, RefreshCw, Clock, DollarSign, Activity, CheckCircle, Save } from 'lucide-react';
 import { getBalance, getHistory, resetBalance, formatBalance } from '../services/virtualBalance';
 
-const PROFILE_KEY = 'tradejournal_profile';
+const getProfileKey = () => `tradejournal_profile_${JSON.parse(localStorage.getItem('user') || '{}').id || 'guest'}`;
 
 function loadProfile() {
-    try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem(getProfileKey())) || {}; } catch { return {}; }
 }
 function saveProfile(data) {
-    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch {}
+    try { localStorage.setItem(getProfileKey(), JSON.stringify(data)); } catch {}
 }
 
 const Profile = () => {
     const saved = loadProfile();
 
-    const [firstName, setFirstName] = useState(saved.firstName || 'Ahmad');
-    const [lastName,  setLastName]  = useState(saved.lastName  || 'Masood');
-    const [email,     setEmail]     = useState(saved.email     || 'ahmad.masood@example.com');
-    const [bio,       setBio]       = useState(saved.bio       || 'Price Action trader specialising in Forex and Crypto. Focus on supply and demand zones.');
+    const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const [firstName, setFirstName] = useState(saved.firstName || loggedUser.name?.split(' ')[0] || 'Trader');
+    const [lastName,  setLastName]  = useState(saved.lastName  || loggedUser.name?.split(' ')[1] || '');
+    const [email,     setEmail]     = useState(saved.email     || loggedUser.email || 'trader@example.com');
+    const [bio,       setBio]       = useState(saved.bio       || 'Active trader focusing on price action and technical analysis.');
     const [saveToast, setSaveToast] = useState(false);
 
     const [balanceInfo, setBalanceInfo] = useState(null);

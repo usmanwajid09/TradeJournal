@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, TrendingUp, TrendingDown, MousePointer2, Crosshair, Type, Layout, ArrowUpRight, ArrowDownRight, Wifi, WifiOff, Loader } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, MousePointer2, Crosshair, Type, Layout, ArrowUpRight, ArrowDownRight, Wifi, WifiOff, Loader, ZoomIn, ZoomOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
     SYMBOLS, subscribeToAllPrices, startMarketData, stopMarketData,
@@ -21,7 +21,7 @@ async function fetchCandles(symbol, timeframe) {
             // Binance public klines — no API key needed
             const interval  = toBinanceInterval(timeframe);
             const binanceSym = meta.binance.toUpperCase();
-            const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSym}&interval=${interval}&limit=60`;
+            const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSym}&interval=${interval}&limit=120`;
             const res  = await fetch(url);
             if (!res.ok) return null;
             const data = await res.json();
@@ -36,7 +36,7 @@ async function fetchCandles(symbol, timeframe) {
             // Twelve Data time series
             const apiKey   = import.meta.env.VITE_TWELVE_DATA_KEY || 'demo';
             const interval = toTwelveInterval(timeframe);
-            const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(meta.twelveSymbol)}&interval=${interval}&outputsize=60&apikey=${apiKey}`;
+            const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(meta.twelveSymbol)}&interval=${interval}&outputsize=120&apikey=${apiKey}`;
             const res  = await fetch(url);
             if (!res.ok) return null;
             const data = await res.json();
@@ -199,6 +199,7 @@ const LiveTrades = () => {
     // Real OHLC candle data
     const [candles, setCandles]         = useState([]);
     const [candlesLoading, setCandlesLoading] = useState(true);
+    const [zoom, setZoom]               = useState(60); // Number of visible candles
 
     const flashTimers = useRef({});
 
@@ -434,12 +435,19 @@ const LiveTrades = () => {
                             </button>
                         ))}
                         <div style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }}/>
+                        <button title="Zoom In" onClick={() => setZoom(z => Math.max(z - 10, 20))} style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ZoomIn size={14}/>
+                        </button>
+                        <button title="Zoom Out" onClick={() => setZoom(z => Math.min(z + 10, 120))} style={{ width: '30px', height: '30px', borderRadius: '6px', border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ZoomOut size={14}/>
+                        </button>
+                        <div style={{ width: '1px', height: '20px', background: 'var(--border-subtle)', margin: '0 4px' }}/>
                         <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{TOOL_LABELS[activeTool]}</span>
                     </div>
 
                     {/* Chart canvas — real OHLC candlesticks */}
                     <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--bg-deep)' }}>
-                        <CandlestickChart candles={candles} loading={candlesLoading}/>
+                        <CandlestickChart candles={candles.slice(-zoom)} loading={candlesLoading}/>
 
                         {/* BUY / SELL */}
                         <div style={{
