@@ -106,9 +106,13 @@ const SLIDES = [
     },
 ];
 
+import { login, register } from '../services/auth';
+
 const Login = () => {
     const [email, setEmail]             = useState('');
     const [password, setPassword]       = useState('');
+    const [name, setName]               = useState(''); // For registration
+    const [isRegister, setIsRegister]   = useState(false); // Toggle
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError]             = useState('');
     const [loading, setLoading]         = useState(false);
@@ -144,11 +148,29 @@ const Login = () => {
     const nextSlide = () => setCurrentSlide(p => (p + 1) % SLIDES.length);
     const prevSlide = () => setCurrentSlide(p => (p - 1 + SLIDES.length) % SLIDES.length);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!email || !password) { setError('Please enter both email and password.'); return; }
-        setLoading(true); setError('');
-        setTimeout(() => { setLoading(false); navigate('/dashboard'); }, 800);
+        setError('');
+        setLoading(true);
+
+        try {
+            if (isRegister) {
+                // Register logic
+                await register({ name, email, password });
+                // Automatically log in after registration
+                await login(email, password);
+            } else {
+                // Login logic
+                await login(email, password);
+            }
+            
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err);
+        } finally {
+            setLoading(true); // Keep loading state until navigation
+            setTimeout(() => setLoading(false), 500);
+        }
     };
 
     const slide = SLIDES[currentSlide];
@@ -194,8 +216,12 @@ const Login = () => {
                         padding: '32px',
                         boxShadow: 'var(--shadow-elevated)',
                     }}>
-                        <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>Welcome back 👋</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '24px' }}>Enter your credentials to continue</p>
+                        <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>
+                            {isRegister ? 'Join the community 🚀' : 'Welcome back 👋'}
+                        </h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '24px' }}>
+                            {isRegister ? 'Start your journey with us' : 'Enter your credentials to continue'}
+                        </p>
 
                         {/* Error */}
                         {error && (
@@ -205,6 +231,32 @@ const Login = () => {
                         )}
 
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Name (Registration Only) */}
+                            {isRegister && (
+                                <div style={{ animation: 'slideDown 0.3s ease' }}>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
+                                        Full Name
+                                    </label>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                        <Mail size={15} style={{ opacity: 0, position: 'absolute', left: '14px' }}/> {/* Placeholder for spacing */}
+                                        <input
+                                            type="text"
+                                            placeholder="John Doe"
+                                            value={name}
+                                            onChange={e => setName(e.target.value)}
+                                            required={isRegister}
+                                            style={{
+                                                width: '100%', padding: '12px 14px',
+                                                background: 'var(--bg-input)', border: '1px solid var(--border-input)',
+                                                borderRadius: '10px', color: 'var(--text-primary)',
+                                                fontSize: '14px', outline: 'none', fontFamily: 'inherit',
+                                                transition: 'all 0.15s',
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Email */}
                             <div>
                                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
@@ -284,7 +336,7 @@ const Login = () => {
                                 onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 24px rgba(79,124,255,0.4)'; }}}
                                 onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 4px 16px rgba(79,124,255,0.3)'; }}
                             >
-                                {loading ? 'Signing in…' : 'Sign In →'}
+                                {loading ? 'Processing…' : (isRegister ? 'Create Account' : 'Sign In →')}
                             </button>
 
                             {/* Divider */}
@@ -318,8 +370,13 @@ const Login = () => {
                     </div>
 
                     <p style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                        Don't have an account?{' '}
-                        <span style={{ color: 'var(--accent-blue)', fontWeight: 600, cursor: 'pointer' }}>Create one free</span>
+                        {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
+                        <span 
+                            onClick={() => { setIsRegister(!isRegister); setError(''); }}
+                            style={{ color: 'var(--accent-blue)', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                            {isRegister ? 'Sign In' : 'Create one free'}
+                        </span>
                     </p>
                 </div>
             </div>

@@ -17,6 +17,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard"  element={<Dashboard />} />
           <Route path="/add-trade"  element={<AddTrade />} />
+          <Route path="/edit-trade/:id" element={<AddTrade />} />
           <Route path="/trades"     element={<LiveTrades />} />
           <Route path="/journal"    element={<TradesList />} />
           <Route path="/profile"    element={<Profile />} />

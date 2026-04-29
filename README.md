@@ -152,11 +152,12 @@ Open [http://localhost:5173](http://localhost:5173)
   - [x] Virtual paper trading credits system ($10,000, 30-day TTL)
   - [x] GSAP-powered premium animations throughout
   - [x] Premium dark-mode design system
-- [ ] **Deliverable 3**: Backend Development (Hexagonal Architecture)
-  - Planned: Node.js + Express REST API
-  - Planned: MongoDB for trade persistence + virtual balance per user
-  - Planned: Server-side WebSocket proxy for all market data
-  - Planned: JWT authentication
+- [x] **Deliverable 3**: Backend Development (Hexagonal Architecture)
+  - [x] Node.js + Express REST API
+  - [x] MongoDB for trade persistence + user management
+  - [x] Hexagonal Architecture (Entities, Use Cases, Adapters)
+  - [x] JWT Authentication
+  - [x] Complete Trade CRUD (Create, Read, Update, Delete)
 - [ ] **Deliverable 4**: Integration & Deployment
 
 ---

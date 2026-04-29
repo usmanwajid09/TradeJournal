@@ -12,11 +12,17 @@ const MOCK_NOTIFICATIONS = [
     { id: 4, type: 'info',    icon: '📋', title: 'Weekly journal reminder',       body: 'Review your trades from this week.',           time: '3h ago',  read: true  },
 ];
 
+import { logout, getCurrentUser } from '../services/auth';
+
 const Navbar = () => {
     const [balanceInfo, setBalanceInfo]   = useState(null);
     const [showNotif, setShowNotif]       = useState(false);
     const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
     const notifRef = useRef(null);
+    const navigate = useNavigate();
+
+    const user = getCurrentUser() || { name: 'Guest', email: '' };
+    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -41,6 +47,11 @@ const Navbar = () => {
 
     const markAllRead = () => setNotifications(ns => ns.map(n => ({ ...n, read: true })));
     const dismiss = (id) => setNotifications(ns => ns.filter(n => n.id !== id));
+
+    const handleLogout = (e) => {
+        e.preventDefault();
+        logout();
+    };
 
     const balanceUp = balanceInfo ? balanceInfo.balance >= balanceInfo.startingBalance : true;
 
@@ -197,10 +208,10 @@ const Navbar = () => {
                                 style={{ background: 'transparent', boxShadow: 'none' }}
                             >
                                 <div className="profile-avatar" style={{ width: '34px', height: '34px', fontSize: '12px', boxShadow: '0 0 10px rgba(79,124,255,0.25)' }}>
-                                    AM
+                                    {initials}
                                 </div>
                                 <div className="text-start d-none d-md-block">
-                                    <div style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.2 }}>Ahmad Masood</div>
+                                    <div style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.2 }}>{user.name}</div>
                                     <div style={{ fontSize: '10px', color: 'var(--accent-blue)' }}>Pro Trader</div>
                                 </div>
                                 <ChevronDown size={14} style={{ color: 'var(--text-secondary)' }} />
@@ -220,8 +231,9 @@ const Navbar = () => {
                                     <Settings size={14} style={{ color: 'var(--text-secondary)' }} /> Profile Settings
                                 </Dropdown.Item>
                                 <Dropdown.Divider style={{ borderColor: 'var(--border-subtle)', margin: '4px 0' }} />
-                                <Dropdown.Item as={Link} to="/login"
-                                    style={{ borderRadius: '8px', padding: '8px 14px', fontSize: '13px', color: 'var(--color-negative)' }}
+                                <Dropdown.Item
+                                    onClick={handleLogout}
+                                    style={{ borderRadius: '8px', padding: '8px 14px', fontSize: '13px', color: 'var(--color-negative)', cursor: 'pointer' }}
                                     className="d-flex align-items-center gap-2"
                                     onMouseEnter={e => e.currentTarget.style.background = 'var(--color-negative-dim)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}

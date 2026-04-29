@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Download, Calendar, Trash2, RefreshCw, TrendingUp, TrendingDown, BarChart2 } from 'lucide-react';
+import { Search, Download, Calendar, Trash2, Edit2, RefreshCw, TrendingUp, TrendingDown, BarChart2 } from 'lucide-react';
 import { getTrades, deleteTrade } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 
 const TradesList = () => {
+    const navigate = useNavigate();
     const [trades, setTrades]             = useState([]);
     const [searchTerm, setSearchTerm]     = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -192,11 +194,18 @@ const TradesList = () => {
                                     </td>
                                     <td style={{ fontSize: '18px' }}>{trade.mood || '—'}</td>
                                     <td style={{ textAlign: 'right', paddingRight: '20px' }}>
-                                        <button id={`delete-trade-${trade.id}`} onClick={() => handleDelete(trade.id)} disabled={deleting === trade.id}
-                                            style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '6px', transition: 'all 0.15s' }}
-                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-negative-dim)'; e.currentTarget.style.color = 'var(--color-negative)'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-                                        ><Trash2 size={14}/></button>
+                                        <div className="d-flex justify-content-end gap-1">
+                                            <button id={`edit-trade-${trade.id}`} onClick={() => navigate(`/edit-trade/${trade.id}`)}
+                                                style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '6px', transition: 'all 0.15s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(79,124,255,0.1)'; e.currentTarget.style.color = 'var(--accent-blue)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                                            ><Edit2 size={14}/></button>
+                                            <button id={`delete-trade-${trade.id}`} onClick={() => handleDelete(trade.id)} disabled={deleting === trade.id}
+                                                style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', borderRadius: '6px', transition: 'all 0.15s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-negative-dim)'; e.currentTarget.style.color = 'var(--color-negative)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                                            ><Trash2 size={14}/></button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

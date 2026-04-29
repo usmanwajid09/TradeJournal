@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Row, Col, Table } from 'react-bootstrap';
 import { ArrowLeft, Plus, Trash2, Star, CheckCircle2, AlertCircle, ChevronRight, ChevronLeft, TrendingUp, FileText, BookOpen } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { addTrade } from '../services/api';
+import { useNavigate, useParams } from 'react-router-dom';
+import { addTrade, getTradeById, updateTrade } from '../services/api';
 import { applyTrade } from '../services/virtualBalance';
 
 const MOODS = ['😊', '😐', '😤', '😨', '😎'];
@@ -48,6 +48,35 @@ const AddTrade = () => {
     const [saving, setSaving]   = useState(false);
     const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
+    const { id }   = useParams();
+    const isEdit   = !!id;
+
+    useEffect(() => {
+        if (isEdit) {
+            const fetchTrade = async () => {
+                try {
+                    const trade = await getTradeById(id);
+                    setFormData({
+                        symbol: trade.symbol,
+                        side: trade.side,
+                        timeframe: trade.timeframe || '1h',
+                        strategy: trade.strategy || '',
+                        entry: trade.entry,
+                        stopLoss: trade.stopLoss || '',
+                        takeProfit: trade.exit || trade.takeProfit || '',
+                        size: trade.size || '',
+                        notes: trade.notes || '',
+                        mood: trade.mood || '😊',
+                        rating: trade.rating || 3,
+                    });
+                } catch (err) {
+                    console.error('Failed to load trade for editing', err);
+                    navigate('/journal');
+                }
+            };
+            fetchTrade();
+        }
+    }, [id, isEdit, navigate]);
 
     const field = (key, val) => setFormData(p => ({ ...p, [key]: val }));
 
@@ -92,12 +121,21 @@ const AddTrade = () => {
             : (e_ - tp_) * (parseFloat(formData.size) || 1);
         const pnl = parseFloat(rawPnl.toFixed(2));
 
-        await addTrade({
-            ...formData,
-            rr:     rr ? `1:${rr}` : '—',
-            profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
-            pnl,
-        });
+        if (isEdit) {
+            await updateTrade(id, {
+                ...formData,
+                rr:     rr ? `1:${rr}` : '—',
+                profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
+                pnl,
+            });
+        } else {
+            await addTrade({
+                ...formData,
+                rr:     rr ? `1:${rr}` : '—',
+                profit: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
+                pnl,
+            });
+        }
 
         // Update virtual balance with trade result
         if (tp_) {
@@ -133,7 +171,7 @@ const AddTrade = () => {
                             <ArrowLeft size={16} />
                         </button>
                         <div>
-                            <h2 className="page-title h4 mb-0 text-white">Log New Trade</h2>
+                            <h2 className="page-title h4 mb-0 text-white">{isEdit ? 'Edit Trade' : 'Log New Trade'}</h2>
                             <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Step {tabIdx + 1} of 3 — {activeTab}</div>
                         </div>
                     </div>
@@ -392,7 +430,7 @@ const AddTrade = () => {
                                             style={{ padding: '10px 32px', borderRadius: '10px', fontSize: '13px' }}
                                             disabled={saving}
                                         >
-                                            {saving ? 'Saving…' : '✓ Complete Log'}
+                                            {saving ? 'Saving…' : (isEdit ? '✓ Update Trade' : '✓ Complete Log')}
                                         </button>
                                     )}
                                 </div>
