@@ -34,11 +34,7 @@ const app = express();
 // 🛡️ Security: Set security HTTP headers (MIT Guide Section 3)
 app.use(helmet());
 
-// 🛡️ Security: Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
-
-// 🛡️ Security: Prevent HTTP Parameter Pollution
-app.use(hpp());
+// Middlewares will be added after body parsing
 
 // 🛡️ Security: Rate Limiting to prevent DoS/Brute Force (MIT Guide Section 5)
 const generalLimiter = rateLimit({
@@ -67,6 +63,12 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.json({ limit: '10kb' })); // Limit body size to prevent DoS
 app.use(cors());
+
+// 🛡️ Security: Data sanitization against NoSQL query injection (MIT Guide Section 4)
+app.use(mongoSanitize());
+
+// 🛡️ Security: Prevent HTTP Parameter Pollution
+app.use(hpp());
 
 // 3. Dependency Injection (Wiring the Hexagon)
 // User Context
