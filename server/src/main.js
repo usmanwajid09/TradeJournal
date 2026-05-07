@@ -1,6 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import hpp from 'hpp';
+import morgan from 'morgan';
 import connectDB from './config/db.js';
 
 // Domain Repositories (Ports)
@@ -25,8 +30,42 @@ connectDB();
 
 const app = express();
 
-// 2. Middlewares
-app.use(express.json());
+// 2. Global Middlewares
+// 🛡️ Security: Set security HTTP headers (MIT Guide Section 3)
+app.use(helmet());
+
+// 🛡️ Security: Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// 🛡️ Security: Prevent HTTP Parameter Pollution
+app.use(hpp());
+
+// 🛡️ Security: Rate Limiting to prevent DoS/Brute Force (MIT Guide Section 5)
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api', generalLimiter);
+
+// Stricter rate limit for auth routes
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10, // limit each IP to 10 requests per windowMs
+    message: 'Too many login/register attempts, please try again after an hour',
+});
+app.use('/api/auth', authLimiter);
+
+// 📝 Logging: Professional request logging (SOA Audit requirement)
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+} else {
+    app.use(morgan('combined'));
+}
+
+app.use(express.json({ limit: '10kb' })); // Limit body size to prevent DoS
 app.use(cors());
 
 // 3. Dependency Injection (Wiring the Hexagon)
