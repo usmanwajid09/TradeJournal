@@ -1,4 +1,0 @@
-{
-  "email": { "$gt": "" },
-  "password": "test"
-}
