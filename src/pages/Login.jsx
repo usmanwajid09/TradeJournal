@@ -155,21 +155,15 @@ const Login = () => {
 
         try {
             if (isRegister) {
-                // Register logic
                 await register({ name, email, password });
-                // Automatically log in after registration
                 await login(email, password);
             } else {
-                // Login logic
                 await login(email, password);
             }
-            
             navigate('/dashboard');
         } catch (err) {
-            setError(err);
-        } finally {
-            setLoading(true); // Keep loading state until navigation
-            setTimeout(() => setLoading(false), 500);
+            setError(typeof err === 'string' ? err : err?.message || 'Authentication failed');
+            setLoading(false);
         }
     };
 
@@ -353,6 +347,7 @@ const Login = () => {
                                     { label: '🐙 GitHub', id: 'github-btn' },
                                 ].map(s => (
                                     <button key={s.id} id={s.id} type="button"
+                                        onClick={() => setError('OAuth coming soon — use email & password for now.')}
                                         style={{
                                             flex: 1, padding: '11px',
                                             background: 'rgba(255,255,255,0.04)',

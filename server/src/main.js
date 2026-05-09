@@ -23,6 +23,8 @@ import createAuthRoutes from './adapters/primary/http/routes/AuthRoutes.js';
 import TradeController from './adapters/primary/http/controllers/TradeController.js';
 import createTradeRoutes from './adapters/primary/http/routes/TradeRoutes.js';
 
+import errorMiddleware from './middleware/errorMiddleware.js';
+
 dotenv.config();
 
 // 1. Connect to Database
@@ -30,81 +32,96 @@ connectDB();
 
 const app = express();
 
-// 2. Global Middlewares
-// 🛡️ Security: Set security HTTP headers (MIT Guide Section 3)
+// 2. CORS — must be FIRST before body parsers so preflight OPTIONS works
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    // Vercel preview & production URLs — set FRONTEND_URL in Railway env vars
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        // Also allow any vercel.app subdomain for preview deployments
+        if (origin.endsWith('.vercel.app')) return callback(null, true);
+        callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// 3. Security headers
 app.use(helmet());
 
-// Middlewares will be added after body parsing
-
-// 🛡️ Security: Rate Limiting to prevent DoS/Brute Force (MIT Guide Section 5)
+// 4. Rate Limiting
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 100,
     message: 'Too many requests from this IP, please try again after 15 minutes',
     standardHeaders: true,
     legacyHeaders: false,
 });
 app.use('/api', generalLimiter);
 
-// Stricter rate limit for auth routes
 const authLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // limit each IP to 10 requests per windowMs
+    max: 20, // raised from 10 to 20 so testing doesn't lock you out
     message: 'Too many login/register attempts, please try again after an hour',
 });
 app.use('/api/auth', authLimiter);
 
-// 📝 Logging: Professional request logging (SOA Audit requirement)
+// 5. Logging
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 } else {
     app.use(morgan('combined'));
 }
 
-app.use(express.json({ limit: '10kb' })); // Limit body size to prevent DoS
-app.use(cors());
+// 6. Body parsing
+app.use(express.json({ limit: '10kb' }));
 
-// 🛡️ Security: Data sanitization against NoSQL query injection (MIT Guide Section 4)
+// 7. Security sanitization
 app.use(mongoSanitize());
-
-// 🛡️ Security: Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// 3. Dependency Injection (Wiring the Hexagon)
-// User Context
-const userRepository = new MongoUserRepository();
+// 8. Dependency Injection (Wiring the Hexagon)
+const userRepository  = new MongoUserRepository();
 const registerUserUseCase = new RegisterUser(userRepository);
-const loginUserUseCase = new LoginUser(userRepository);
-const authController = new AuthController(registerUserUseCase, loginUserUseCase);
+const loginUserUseCase    = new LoginUser(userRepository);
+const authController  = new AuthController(registerUserUseCase, loginUserUseCase);
 
-// Trade Context
-const tradeRepository = new MongoTradeRepository();
-const logTradeUseCase = new LogTrade(tradeRepository);
-const getTradesUseCase = new GetTrades(tradeRepository);
+const tradeRepository    = new MongoTradeRepository();
+const logTradeUseCase    = new LogTrade(tradeRepository);
+const getTradesUseCase   = new GetTrades(tradeRepository);
 const deleteTradeUseCase = new DeleteTrade(tradeRepository);
 const updateTradeUseCase = new UpdateTrade(tradeRepository);
-const getTradeUseCase = new GetTrade(tradeRepository);
-const tradeController = new TradeController(logTradeUseCase, getTradesUseCase, deleteTradeUseCase, updateTradeUseCase, getTradeUseCase);
+const getTradeUseCase    = new GetTrade(tradeRepository);
+const tradeController    = new TradeController(logTradeUseCase, getTradesUseCase, deleteTradeUseCase, updateTradeUseCase, getTradeUseCase);
 
-// 4. Routes
+// 9. Routes
 app.use('/api/auth', createAuthRoutes(authController));
 app.use('/api/trades', createTradeRoutes(tradeController));
 
-// 5. Health Check
+// 10. Health Check
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', message: 'TradeJournal Backend is running' });
+    res.status(200).json({ status: 'OK', message: 'TradeJournal API running', env: process.env.NODE_ENV });
 });
 
-// 6. Global Error Handler (Last middleware)
-import errorMiddleware from './middleware/errorMiddleware.js';
+// 11. 404 handler
 app.use((req, res, next) => {
     res.status(404);
     next(new Error(`Route not found - ${req.originalUrl}`));
 });
+
+// 12. Global Error Handler (Last middleware)
 app.use(errorMiddleware);
 
-// 7. Start Server
+// 13. Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`[Server] TradeJournal API running on port ${PORT}`);
+    console.log(`[Server] TradeJournal API running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
 });
