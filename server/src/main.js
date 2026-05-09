@@ -32,6 +32,10 @@ connectDB();
 
 const app = express();
 
+// Trust proxy is required when hosted on Railway/Vercel/Heroku
+// so rate limiters use the real client IP instead of the proxy IP.
+app.set('trust proxy', 1);
+
 // 2. CORS — must be FIRST before body parsers so preflight OPTIONS works
 const allowedOrigins = [
     'http://localhost:5173',
