@@ -142,26 +142,6 @@ Open [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## Project Deliverables Status
-
-- [x] **Deliverable 1**: UI/UX Design (Figma)
-- [x] **Deliverable 2**: Frontend Development
-  - [x] All pages implemented and routed
-  - [x] Shared in-memory data store (all CRUD actions functional)
-  - [x] Real-time market data via Binance WebSocket + Twelve Data
-  - [x] Virtual paper trading credits system ($10,000, 30-day TTL)
-  - [x] GSAP-powered premium animations throughout
-  - [x] Premium dark-mode design system
-- [x] **Deliverable 3**: Backend Development (Hexagonal Architecture)
-  - [x] Node.js + Express REST API
-  - [x] MongoDB for trade persistence + user management
-  - [x] Hexagonal Architecture (Entities, Use Cases, Adapters)
-  - [x] JWT Authentication
-  - [x] Complete Trade CRUD (Create, Read, Update, Delete)
-- [ ] **Deliverable 4**: Integration & Deployment
-
----
-
 ## Team Members
 
 | Name | GitHub |
