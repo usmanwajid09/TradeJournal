@@ -1,6 +1,6 @@
 # TradeJournal — Professional Trading Dashboard
 
-> A sophisticated trading journal and analytics platform built for serious traders. Built for Deliverable 2 of the Web Engineering course (Spring 2026).
+> A sophisticated trading journal and analytics platform built for serious traders.
 
 ---
 
